@@ -1,9 +1,27 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+function initSupabase(): SupabaseClient | null {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseKey = (
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )?.trim();
 
-export const supabase =
-  supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+  if (
+    !supabaseUrl ||
+    !supabaseKey ||
+    supabaseUrl === "undefined" ||
+    !supabaseUrl.startsWith("http")
+  ) {
+    return null;
+  }
+
+  try {
+    return createClient(supabaseUrl, supabaseKey);
+  } catch (err) {
+    console.error("Supabase client init error:", err);
+    return null;
+  }
+}
+
+export const supabase = initSupabase();
