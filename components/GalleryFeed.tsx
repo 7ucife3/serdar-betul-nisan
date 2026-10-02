@@ -150,15 +150,6 @@ export default function GalleryFeed({
           </div>
 
           <div className="flex items-center gap-2">
-            <a
-              href="/api/admin/download-zip"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white border border-[#E0D4C2] text-xs font-medium text-[#7A6A56] hover:text-[#382B1C] hover:bg-[#F5EFE4] transition-all shadow-xs"
-              title="Serdar & Betül İçin: Tüm Orijinal Fotoğrafları ZIP İndir"
-            >
-              <Download className="w-3.5 h-3.5 text-[#C5A059]" />
-              <span className="hidden md:inline">Tümünü İndir (ZIP)</span>
-            </a>
-
             {guestName ? (
               <button
                 onClick={onChangeGuestName}

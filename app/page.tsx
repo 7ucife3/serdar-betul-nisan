@@ -73,12 +73,8 @@ export default function WelcomePage() {
       <div className="absolute top-1/2 -right-24 w-80 h-80 rounded-full bg-[#DFCEB2]/30 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-20 left-1/3 w-96 h-96 rounded-full bg-[#EADCC7]/40 blur-3xl pointer-events-none" />
 
-      {/* Top Header Tag */}
-      <div className="z-10 flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-[#E5DAC8] shadow-xs text-[11px] tracking-widest text-[#876F4B] uppercase font-semibold">
-        <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
-        <span>Serdar & Betül Nişan Davetiyesi</span>
-        <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
-      </div>
+      {/* Top Header Spacer (Invisible to preserve layout height) */}
+      <div className="z-10 h-8 opacity-0 pointer-events-none" />
 
       {/* Center Interactive Postcard Container */}
       <div className="relative z-10 w-full max-w-[420px] h-[80vh] sm:h-[82vh] min-h-[540px] max-h-[720px] my-auto flex flex-col items-center">
@@ -133,15 +129,6 @@ export default function WelcomePage() {
                     <Loader2 className="w-4 h-4 animate-spin text-[#C5A059]" />
                     <span>Galeriye yönlendiriliyorsunuz...</span>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={navigateToGallery}
-                    className="text-xs font-semibold text-[#A58249] hover:underline pt-2 flex items-center gap-1 transition-colors cursor-pointer"
-                  >
-                    <span>Beklemeden Devam Et</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               </div>
             ) : (
@@ -154,9 +141,8 @@ export default function WelcomePage() {
                   <h2 className="font-serif text-2xl sm:text-3xl text-[#2F2923] font-normal">
                     Aramıza Hoş Geldiniz!
                   </h2>
-                  <p className="text-xs text-[#736350] mt-1.5 leading-relaxed max-w-xs mx-auto">
-                    Fotoğraflarınızı ve tebrik mesajlarınızı sizin adınızla
-                    paylaşabilmemiz için lütfen adınızı yazın.
+                  <p className="text-xs text-[#736350] mt-1.5 leading-relaxed max-w-xs mx-auto font-medium">
+                    Lütfen adınızı girin
                   </p>
                 </div>
 
@@ -193,22 +179,12 @@ export default function WelcomePage() {
                     type="submit"
                     className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#A58249] to-[#8A6732] hover:from-[#94743E] hover:to-[#785827] text-white font-medium text-sm shadow-md shadow-[#A58249]/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <span>Galeriyi Aç</span>
+                    <span>Devam et</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </form>
               </div>
             )}
-
-            {/* Back button to close card */}
-            <button
-              type="button"
-              onClick={() => setIsRevealed(false)}
-              className="text-[11px] text-[#A08E78] hover:text-[#5B4323] flex items-center gap-1 z-10 transition-colors pb-1 cursor-pointer"
-            >
-              <ChevronDown className="w-3.5 h-3.5" />
-              <span>Kartpostalı Kapat</span>
-            </button>
           </motion.div>
 
           {/* ========================================================
@@ -305,14 +281,8 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      {/* Bottom Hint */}
-      <div className="z-10 text-center">
-        <p className="text-[11px] text-[#A69785]">
-          {isRevealed
-            ? "Aşağı kaydırarak kartpostalı kapatabilirsiniz"
-            : "Kartpostalı yukarı kaydırarak galeriyi açın"}
-        </p>
-      </div>
+      {/* Bottom Hint Spacer */}
+      <div className="z-10 h-4 opacity-0 pointer-events-none" />
     </main>
   );
 }
