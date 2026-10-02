@@ -143,22 +143,25 @@ export async function getPosts(): Promise<PhotoPost[]> {
   // If Supabase configured, fetch from cloud database
   if (supabase) {
     try {
-      const { data: dbPosts, error: postsErr } = await supabase
-        .from("posts")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const [postsRes, commsRes] = await Promise.all([
+        supabase
+          .from("posts")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("comments")
+          .select("*")
+          .order("created_at", { ascending: true }),
+      ]);
 
-      if (postsErr) throw postsErr;
+      if (postsRes.error) throw postsRes.error;
+      if (commsRes.error) throw commsRes.error;
 
-      const { data: dbComments, error: commErr } = await supabase
-        .from("comments")
-        .select("*")
-        .order("created_at", { ascending: true });
+      const dbPosts = postsRes.data || [];
+      const dbComments = commsRes.data || [];
 
-      if (commErr) throw commErr;
-
-      const mappedPosts: PhotoPost[] = (dbPosts || []).map((p) => {
-        const postComments: CommentItem[] = (dbComments || [])
+      const mappedPosts: PhotoPost[] = dbPosts.map((p) => {
+        const postComments: CommentItem[] = dbComments
           .filter((c) => c.post_id === p.id)
           .map((c) => ({
             id: c.id,
@@ -358,6 +361,7 @@ export async function saveBase64Image(
         Key: filename,
         Body: buffer,
         ContentType: mimeType,
+        CacheControl: "public, max-age=31536000, immutable",
       });
 
       await r2Client.send(command);
