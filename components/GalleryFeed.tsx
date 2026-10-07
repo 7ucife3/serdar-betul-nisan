@@ -97,10 +97,6 @@ export default function GalleryFeed({
   };
 
   const handlePlusClick = () => {
-    if (!guestName || guestName.trim().length === 0) {
-      onRequestOpenNameModal();
-      return;
-    }
     fileInputRef.current?.click();
   };
 
@@ -150,27 +146,6 @@ export default function GalleryFeed({
           </div>
 
           <div className="flex items-center gap-2">
-            {guestName ? (
-              <button
-                onClick={onChangeGuestName}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E0D4C2] text-xs font-medium text-[#483B2A] hover:bg-[#F5EFE4] transition-all shadow-xs"
-                title="İsminizi Değiştirin"
-              >
-                <User className="w-3.5 h-3.5 text-[#C5A059]" />
-                <span className="max-w-[120px] sm:max-w-[180px] truncate">
-                  {guestName}
-                </span>
-                <Edit3 className="w-3 h-3 text-[#A08F79]" />
-              </button>
-            ) : (
-              <button
-                onClick={onRequestOpenNameModal}
-                className="px-3 py-1.5 rounded-full bg-[#A58249] text-white text-xs font-medium hover:bg-[#8F6F3A] transition-colors"
-              >
-                Giriş Yap
-              </button>
-            )}
-
             <button
               onClick={fetchPosts}
               className="p-2 rounded-full bg-white border border-[#E0D4C2] text-[#7A6A56] hover:text-[#382B1C] hover:bg-[#F5EFE4] transition-all"

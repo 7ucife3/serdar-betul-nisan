@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Check, Loader2, Zap, Layers, Image as ImageIcon } from "lucide-react";
+import { X, Sparkles, Check, Loader2, Zap, Layers, Image as ImageIcon, User } from "lucide-react";
 import confetti from "canvas-confetti";
 import { compressImage } from "@/lib/imageCompressor";
 
@@ -15,7 +15,7 @@ export interface SelectedFileItem {
 
 interface UploadWizardModalProps {
   isOpen: boolean;
-  guestName: string;
+  guestName?: string;
   files: File[];
   onClose: () => void;
   onSuccess: () => void;
@@ -32,7 +32,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 
 export default function UploadWizardModal({
   isOpen,
-  guestName,
+  guestName = "",
   files,
   onClose,
   onSuccess,
@@ -44,6 +44,15 @@ export default function UploadWizardModal({
       previewUrl: URL.createObjectURL(f),
     }))
   );
+
+  const [uploaderName, setUploaderName] = useState(() => {
+    if (guestName && guestName.trim()) return guestName.trim();
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("nisan_guest_name") || "";
+    }
+    return "";
+  });
+  const [nameError, setNameError] = useState("");
 
   const [isHd, setIsHd] = useState<boolean>(true); // Default HD on, WhatsApp style
   const [message, setMessage] = useState("");
@@ -66,6 +75,17 @@ export default function UploadWizardModal({
 
   const handleUpload = async () => {
     if (items.length === 0 || isUploading) return;
+
+    const cleanName = uploaderName.trim();
+    if (!cleanName || cleanName.length < 2) {
+      setNameError("Lütfen geçerli bir isim-soyisim girin.");
+      return;
+    }
+    setNameError("");
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nisan_guest_name", cleanName);
+    }
 
     try {
       setIsUploading(true);
@@ -120,7 +140,7 @@ export default function UploadWizardModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          guestName,
+          guestName: cleanName,
           items: [uploadItem],
         }),
       });
@@ -192,9 +212,6 @@ export default function UploadWizardModal({
                   )}
                 </span>
               </div>
-              <p className="text-[11px] text-[#8C7A63] mt-0.5">
-                Yükleyen: <strong className="text-[#5B4323]">{guestName}</strong>
-              </p>
             </div>
 
             <div className="flex items-center gap-2">
@@ -251,6 +268,30 @@ export default function UploadWizardModal({
 
           {/* Content Body */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+            {/* Required Uploader Name Input */}
+            <div>
+              <label className="block text-xs font-semibold text-[#5B4B38] mb-1.5">
+                Adınız & Soyadınız <span className="text-rose-600">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#9E8E7A]">
+                  <User className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  value={uploaderName}
+                  onChange={(e) => {
+                    setUploaderName(e.target.value);
+                    if (nameError) setNameError("");
+                  }}
+                  placeholder="Örn: Ayşe Yılmaz"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-white border border-[#E0D3C1] focus:border-[#B28B47] focus:ring-2 focus:ring-[#B28B47]/20 outline-none text-xs sm:text-sm text-[#2D2A26] placeholder-[#A89885]"
+                />
+              </div>
+              {nameError && (
+                <p className="text-xs text-rose-600 mt-1 pl-1">{nameError}</p>
+              )}
+            </div>
             {/* Single clean message input */}
             <div>
               <label className="block text-xs font-semibold text-[#5B4B38] mb-1.5">

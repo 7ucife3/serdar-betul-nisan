@@ -16,18 +16,18 @@ import { formatRelativeTime } from "@/lib/dateUtils";
 interface CommentsModalProps {
   isOpen: boolean;
   postId: string;
-  guestName: string;
+  guestName?: string;
   postAuthor: string;
   initialComments?: CommentItem[];
   onClose: () => void;
   onCommentsUpdated: (postId: string, comments: CommentItem[]) => void;
-  onRequestGuestName: () => void;
+  onRequestGuestName?: () => void;
 }
 
 export default function CommentsModal({
   isOpen,
   postId,
-  guestName,
+  guestName = "",
   postAuthor,
   initialComments = [],
   onClose,
@@ -36,6 +36,14 @@ export default function CommentsModal({
 }: CommentsModalProps) {
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
   const [inputText, setInputText] = useState("");
+  const [commenterName, setCommenterName] = useState(() => {
+    if (guestName && guestName.trim()) return guestName.trim();
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("nisan_guest_name") || "";
+    }
+    return "";
+  });
+  const [nameError, setNameError] = useState("");
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
     author: string;
@@ -50,12 +58,19 @@ export default function CommentsModal({
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = inputText.trim();
-    if (!trimmed || isSubmitting) return;
+    const trimmedText = inputText.trim();
+    const trimmedName = commenterName.trim();
 
-    if (!guestName || guestName.trim() === "") {
-      onRequestGuestName();
+    if (!trimmedName || trimmedName.length < 2) {
+      setNameError("Lütfen adınızı girin.");
       return;
+    }
+    setNameError("");
+
+    if (!trimmedText || isSubmitting) return;
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nisan_guest_name", trimmedName);
     }
 
     try {
@@ -66,8 +81,8 @@ export default function CommentsModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           postId,
-          author: guestName,
-          text: trimmed,
+          author: trimmedName,
+          text: trimmedText,
           parentId: replyingTo?.id,
         }),
       });
@@ -242,9 +257,9 @@ export default function CommentsModal({
           </div>
 
           {/* Bottom Input Area */}
-          <div className="p-3 sm:p-4 border-t border-[#EFE7D8] bg-white">
+          <div className="p-3 sm:p-4 border-t border-[#EFE7D8] bg-white space-y-2">
             {replyingTo && (
-              <div className="mb-2 px-3 py-1 rounded-xl bg-[#F4EFE6] border border-[#EADBCA] flex items-center justify-between text-[11px] text-[#786348]">
+              <div className="px-3 py-1 rounded-xl bg-[#F4EFE6] border border-[#EADBCA] flex items-center justify-between text-[11px] text-[#786348]">
                 <span>
                   <strong>{replyingTo.author}</strong> kişisine yanıt
                   veriyorsunuz
@@ -259,28 +274,45 @@ export default function CommentsModal({
               </div>
             )}
 
-            <form onSubmit={handleSend} className="flex items-center gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder={
-                  guestName
-                    ? `${guestName} olarak yorum yap...`
-                    : "Bir tebrik veya yorum yazın..."
-                }
-                className="flex-1 px-4 py-2.5 rounded-full bg-[#FAF7F2] border border-[#E0D3C1] focus:border-[#C5A059] outline-none text-xs text-[#2D2A26] placeholder-[#A69785]"
-              />
+            <form onSubmit={handleSend} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="relative w-1/3 min-w-[120px]">
+                  <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-[#9E8E7A]">
+                    <User className="w-3.5 h-3.5" />
+                  </div>
+                  <input
+                    type="text"
+                    value={commenterName}
+                    onChange={(e) => {
+                      setCommenterName(e.target.value);
+                      if (nameError) setNameError("");
+                    }}
+                    placeholder="Adınız..."
+                    className="w-full pl-8 pr-2 py-2 rounded-full bg-[#FAF7F2] border border-[#E0D3C1] focus:border-[#C5A059] outline-none text-xs text-[#2D2A26] placeholder-[#A69785]"
+                  />
+                </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting || !inputText.trim()}
-                className="p-2.5 rounded-full bg-[#A58249] hover:bg-[#8F6F3A] text-white disabled:opacity-40 transition-all shadow-xs"
-                title="Gönder"
-              >
-                <Send className="w-4 h-4" />
-              </button>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Yorumunuzu yazın..."
+                  className="flex-1 px-4 py-2 rounded-full bg-[#FAF7F2] border border-[#E0D3C1] focus:border-[#C5A059] outline-none text-xs text-[#2D2A26] placeholder-[#A69785]"
+                />
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !inputText.trim() || !commenterName.trim()}
+                  className="p-2 rounded-full bg-[#A58249] hover:bg-[#8F6F3A] text-white disabled:opacity-40 transition-all shadow-xs shrink-0"
+                  title="Gönder"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+              {nameError && (
+                <p className="text-[11px] text-rose-600 pl-2">{nameError}</p>
+              )}
             </form>
           </div>
         </motion.div>
