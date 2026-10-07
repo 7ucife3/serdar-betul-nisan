@@ -535,3 +535,30 @@ export async function registerGuest(
   return record;
 }
 
+export async function deletePost(postId: string): Promise<boolean> {
+  if (supabase) {
+    try {
+      // First delete comments attached to this post
+      await supabase.from("comments").delete().eq("post_id", postId);
+      // Then delete post itself
+      const { error } = await supabase.from("posts").delete().eq("id", postId);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error("Supabase deletePost error:", err);
+    }
+  }
+
+  // Local fallback
+  await ensureDirs();
+  try {
+    const posts = await getPosts();
+    const updated = posts.filter((p) => p.id !== postId);
+    await fs.writeFile(POSTS_FILE, JSON.stringify(updated, null, 2), "utf-8");
+    return true;
+  } catch (err) {
+    console.error("Local deletePost error:", err);
+    return false;
+  }
+}
+
