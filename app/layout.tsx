@@ -19,7 +19,9 @@ export const metadata: Metadata = {
   description:
     "Serdar & Betül'ün bu özel gününde çektiğiniz fotoğrafları ve tebrik mesajlarınızı paylaşın.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/icon.png?v=2",
+    shortcut: "/icon.png?v=2",
+    apple: "/apple-icon.png?v=2",
   },
 };
 
