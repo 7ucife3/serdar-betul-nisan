@@ -84,12 +84,12 @@ export default function GalleryFeed({
     setLightboxIndex(index);
   };
 
-  const handleLike = async (postId: string) => {
+  const handleLike = async (postId: string, isUnlike: boolean) => {
     try {
       await fetch("/api/photos", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId }),
+        body: JSON.stringify({ postId, isUnlike }),
       });
     } catch (err) {
       console.error("Failed to like:", err);

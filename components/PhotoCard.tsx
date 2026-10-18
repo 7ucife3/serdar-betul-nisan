@@ -10,7 +10,7 @@ interface PhotoCardProps {
   post: PhotoPost;
   onOpenLightbox: (post: PhotoPost, index: number) => void;
   onOpenComments: (post: PhotoPost) => void;
-  onLike: (postId: string) => void;
+  onLike: (postId: string, isUnlike: boolean) => void;
 }
 
 export default function PhotoCard({
@@ -19,15 +19,40 @@ export default function PhotoCard({
   onOpenComments,
   onLike,
 }: PhotoCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const likedList = JSON.parse(localStorage.getItem("nisan_liked_posts") || "[]");
+        return Array.isArray(likedList) && likedList.includes(post.id);
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
   const [likesCount, setLikesCount] = useState(post.likes);
   const photo = post.photos[0];
   const commentsCount = post.comments?.length || 0;
 
   const handleLike = () => {
-    setIsLiked(true);
-    setLikesCount((prev) => prev + 1);
-    onLike(post.id);
+    const nextLiked = !isLiked;
+    setIsLiked(nextLiked);
+    setLikesCount((prev) => (nextLiked ? prev + 1 : Math.max(0, prev - 1)));
+
+    if (typeof window !== "undefined") {
+      try {
+        const likedList = JSON.parse(localStorage.getItem("nisan_liked_posts") || "[]");
+        const set = new Set(Array.isArray(likedList) ? likedList : []);
+        if (nextLiked) {
+          set.add(post.id);
+        } else {
+          set.delete(post.id);
+        }
+        localStorage.setItem("nisan_liked_posts", JSON.stringify(Array.from(set)));
+      } catch {}
+    }
+
+    onLike(post.id, !nextLiked);
   };
 
   const handleShare = async () => {

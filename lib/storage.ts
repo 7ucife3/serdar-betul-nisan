@@ -231,18 +231,9 @@ export async function addPosts(newPosts: PhotoPost[]): Promise<PhotoPost[]> {
   return updated;
 }
 
-export async function toggleLikePost(postId: string): Promise<number | null> {
+export async function toggleLikePost(postId: string, isUnlike = false): Promise<number | null> {
   if (supabase) {
     try {
-      const { data, error } = await supabase.rpc("increment_likes", {
-        target_post_id: postId,
-      });
-
-      if (!error && typeof data === "number") {
-        return data;
-      }
-
-      // If RPC doesn't exist, manual update
       const { data: post } = await supabase
         .from("posts")
         .select("likes")
@@ -250,7 +241,8 @@ export async function toggleLikePost(postId: string): Promise<number | null> {
         .single();
 
       if (post) {
-        const newLikes = (post.likes || 0) + 1;
+        const currentLikes = post.likes || 0;
+        const newLikes = isUnlike ? Math.max(0, currentLikes - 1) : currentLikes + 1;
         await supabase
           .from("posts")
           .update({ likes: newLikes })
@@ -266,7 +258,8 @@ export async function toggleLikePost(postId: string): Promise<number | null> {
   const posts = await getPosts();
   const post = posts.find((p) => p.id === postId);
   if (!post) return null;
-  post.likes = (post.likes || 0) + 1;
+  const currentLikes = post.likes || 0;
+  post.likes = isUnlike ? Math.max(0, currentLikes - 1) : currentLikes + 1;
   await ensureDirs();
   await fs.writeFile(POSTS_FILE, JSON.stringify(posts, null, 2), "utf-8");
   return post.likes;

@@ -47,7 +47,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { postId } = body;
+    const { postId, isUnlike } = body;
 
     if (!postId) {
       return NextResponse.json(
@@ -56,7 +56,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const likes = await toggleLikePost(postId);
+    const likes = await toggleLikePost(postId, Boolean(isUnlike));
     return NextResponse.json({ success: true, likes });
   } catch (error) {
     console.error("Failed to like post:", error);
