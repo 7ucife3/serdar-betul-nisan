@@ -96,45 +96,72 @@ export default function UploadWizardModal({
       );
       setUploadProgress(10);
 
-      // Process and compress each photo
-      const processedPhotos: Array<{
-        dataUrl: string;
-        originalDataUrl?: string;
+      // Process and upload each photo individually (streaming upload)
+      // This guarantees we never hit Vercel's 4.5MB request entity size limit
+      const uploadedPhotos: Array<{
+        url: string;
+        originalUrl: string;
+        isHd: boolean;
       }> = [];
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         setStatusText(`Fotoğraf ${i + 1}/${items.length} işleniyor...`);
 
-        // Fast web thumbnail
-        const thumbBase64 = await compressImage(item.file);
+        // Fast web thumbnail (scaled down to max 1400px, JPEG)
+        const thumbBase64 = await compressImage(item.file, 1400, 1400, 0.78);
 
-        // Optional raw HD data
-        let origBase64: string | undefined = undefined;
-        if (isHd) {
-          origBase64 = await readFileAsDataUrl(item.file);
-        }
-
-        processedPhotos.push({
-          dataUrl: thumbBase64,
-          originalDataUrl: origBase64,
+        // Upload thumbnail
+        setStatusText(`Fotoğraf ${i + 1}/${items.length} yükleniyor...`);
+        const thumbRes = await fetch("/api/upload/photo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dataUrl: thumbBase64, isHd: false }),
         });
 
-        setUploadProgress(15 + Math.round(((i + 1) / items.length) * 45));
+        const thumbData = await thumbRes.json();
+        if (!thumbRes.ok || !thumbData.success) {
+          throw new Error(thumbData.error || `Fotoğraf ${i + 1} yüklenemedi.`);
+        }
+
+        const thumbUrl = thumbData.url;
+        let originalUrl = thumbUrl;
+
+        // If HD is selected, compress safely to HD size (max 2400px) instead of sending raw 15MB file
+        if (isHd) {
+          setStatusText(`Fotoğraf ${i + 1}/${items.length} (HD) yükleniyor...`);
+          const hdBase64 = await compressImage(item.file, 2560, 2560, 0.88);
+          const hdRes = await fetch("/api/upload/photo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dataUrl: hdBase64, isHd: true }),
+          });
+
+          const hdData = await hdRes.json();
+          if (hdRes.ok && hdData.success) {
+            originalUrl = hdData.url;
+          }
+        }
+
+        uploadedPhotos.push({
+          url: thumbUrl,
+          originalUrl: originalUrl,
+          isHd: isHd,
+        });
+
+        setUploadProgress(15 + Math.round(((i + 1) / items.length) * 70));
       }
 
-      setStatusText("Sunucuya yükleniyor...");
-      setUploadProgress(65);
+      setStatusText("Paylaşım kaydediliyor...");
+      setUploadProgress(90);
 
-      // Simple, automatic payload
+      // Final metadata payload (lightweight: only photo URLs, guestName and message)
       const uploadItem = {
-        photos: processedPhotos,
+        photos: uploadedPhotos,
         message: message.trim() || undefined,
         isGroup: isGroup,
         isHd: isHd,
       };
-
-      setUploadProgress(85);
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -147,7 +174,7 @@ export default function UploadWizardModal({
 
       const resData = await response.json();
       if (!response.ok || !resData.success) {
-        throw new Error(resData.error || "Yükleme başarısız oldu.");
+        throw new Error(resData.error || "Paylaşım kaydedilemedi.");
       }
 
       setUploadProgress(100);

@@ -47,27 +47,30 @@ export async function POST(request: Request) {
       const savedPhotos: PhotoItem[] = [];
 
       for (const p of item.photos) {
-        if (!p.dataUrl) continue;
+        let thumbUrl = (p as any).url || "";
+        let originalUrl = (p as any).originalUrl || "";
+        let isHd = (p as any).isHd ?? false;
 
-        // Save compressed web version
-        const thumbUrl = await saveBase64Image(p.dataUrl, "thumb");
+        // If not already uploaded, upload now (backward compatibility)
+        if (!thumbUrl && p.dataUrl) {
+          thumbUrl = await saveBase64Image(p.dataUrl, "thumb");
+          originalUrl = thumbUrl;
 
-        // If HD original is provided, save raw version as well
-        let originalUrl = thumbUrl;
-        let isHd = false;
-
-        if (p.originalDataUrl && p.originalDataUrl.trim() !== "") {
-          originalUrl = await saveBase64Image(p.originalDataUrl, "orig");
-          isHd = true;
+          if (p.originalDataUrl && p.originalDataUrl.trim() !== "") {
+            originalUrl = await saveBase64Image(p.originalDataUrl, "orig");
+            isHd = true;
+          }
         }
 
-        savedPhotos.push({
-          id: `photo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-          url: thumbUrl,
-          originalUrl: originalUrl,
-          caption: p.caption?.trim() || undefined,
-          isHd: isHd,
-        });
+        if (thumbUrl) {
+          savedPhotos.push({
+            id: `photo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+            url: thumbUrl,
+            originalUrl: originalUrl || thumbUrl,
+            caption: p.caption?.trim() || undefined,
+            isHd: isHd,
+          });
+        }
       }
 
       if (savedPhotos.length > 0) {
